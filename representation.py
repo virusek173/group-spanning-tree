@@ -1,4 +1,5 @@
 import os
+import random
 from scipy.spatial import distance as countDistance
 
 class Representation:
@@ -11,13 +12,14 @@ class Representation:
         # Tests:
         # self.__testCountDistance()
 
+        print('Reading coords from file...')
+        self.coordData = self.__readFileToCoords()
+
         if self.__checkMatrixFileExist():
             print('Reading matrix from file...')
             self.matrixData = self.__readFileToMatrix()
             print('Done! {} long matrix loaded'.format(len(self.matrixData)))
         else:
-            print('Reading coords from file...')
-            self.coordData = self.__readFileToCoords()
             print('Creating matrix from file...')
             self.matrixData = self.__createNeighborhoodMatrix()
             print('Saving matrix to file...')
@@ -90,6 +92,21 @@ class Representation:
             print('YES')
         else:
             print('NO! {}'.format(value))
+
+    def divideChunks(self, arr, chunk): 
+        for i in range(0, len(arr), chunk):  
+            yield arr[i:i + chunk] 
+
+        
+
+    def createGraphsRandomMethod(self):
+        allRandomPoints = random.sample(range(1, 201), 200)
+        plotData = list(self.divideChunks(allRandomPoints, 20))
+        # check if sum is equal points number
+
+        return plotData
+
+
 
     def getMatrixData(self):
         return self.matrixData
