@@ -3,12 +3,10 @@ from visualization import Visualization
 
 def launch():
     rep = Representation()
+    plotData = rep.createGraphsRandomMethod()
 
-    # coordData = rep.getCoordData()
-    # visual = Visualization(coordData)
-    # visual.showScatterplot()
+    coordData = rep.getCoordData()
+    visual = Visualization(coordData, plotData)
+    visual.showScatterplot()
 
-    matrixData = rep.getMatrixData()
-    # print('matrixData: ')
-    # print(matrixData)
 launch()
