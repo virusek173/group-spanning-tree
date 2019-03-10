@@ -52,7 +52,8 @@ class Representation:
             data = f.readlines()
 
             for line in data:
-                lineValues = line.split()
+                # lineValues = line.split()
+                lineValues = [float(x) for x in line.split()]
                 finalData.append(lineValues)
 
         return finalData
@@ -95,7 +96,7 @@ class Representation:
 
     def divideChunks(self, arr, chunk): 
         for i in range(0, len(arr), chunk):  
-            yield arr[i:i + chunk] 
+            yield arr[i:i + chunk]
 
         
 
@@ -105,8 +106,6 @@ class Representation:
         # check if sum is equal points number
 
         return plotData
-
-
 
     def getMatrixData(self):
         return self.matrixData
