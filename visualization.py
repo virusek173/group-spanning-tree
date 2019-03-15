@@ -60,14 +60,14 @@ class Visualization:
         # random.sample(range(1, 201), 20)
 
         colors = (0,0,0)
-        pointSize = np.pi*3
+        pointSize = np.pi*6
 
         # Visualize points
         scatterX = [x[0] for x in coordData]
         scatterY = [y[1] for y in coordData]
 
         plt.scatter(scatterX, scatterY, s=pointSize, c=colors, alpha=0.5)
-        
+        # print(self.plotData)
         # Visualize graphs
         for line in self.plotData:
             plotX = [coordData[index][0] for index in line]
@@ -80,6 +80,6 @@ class Visualization:
         plt.title('Spanning tree groups')
         plt.xlabel('x')
         plt.ylabel('y')
-        plt.savefig('output/regret100xtests_points.png')
+        plt.savefig('output/random_REAL_100_test_MST.png')
         print('showing visualization...')
         plt.show()

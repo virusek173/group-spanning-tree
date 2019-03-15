@@ -1,5 +1,6 @@
 import os
 import random
+import time
 import numpy as np
 from copy import deepcopy
 
@@ -13,45 +14,24 @@ class Controller:
     def createGraphsRandomMethod(self):
         allRandomPoints = random.sample(range(1, 201), 200)
         plotData = list(self._divideChunks(allRandomPoints, 20))
-        # check if sum is equal points number
 
         return plotData
 
     def _minValueNotZero(self, myList):
-        minVal = 99999
-        # print(myList)
+        minVal = 9999
+
         for x in myList:
             if float(x) != float(0) and x < minVal:
                 minVal = x
-
-        # print('choosed')
-        # print(minVal)
-
-        # if float(minVal) == float(0):
-        #     print('end with IS YES AS 0')
-        #     print(minVal)
-        # else:
-        #     print('end with NOT 0')
-        #     print(minVal)
-        #     print('myList')
-        #     print(myList)
-        #     print('INDEX IN FUNCTION')
-        #     print(myList.index(minVal))
-
-        # print('minVal')
-        # print(minVal)
 
         return minVal
 
     def test(self):
         tab = [215.87033144922904, 44.9221548904324, 34.713109915419565, 0.0, 48.25971404805462]
         tab2 = [215.87033144922904, 12.9221548904324, 34.713109915419565, 0.0, 48.25971404805462]
-        # tab = [19.924858845171276, 12.083045973594572]
-        # countRegret = self._countRegret(tab, 18)
         
         minIndex = tab.index(self._minValueNotZero(tab))
         minIndex2 = tab2.index(self._minValueNotZero(tab2))
-
 
         print(minIndex)
         print(minIndex2)
@@ -71,7 +51,7 @@ class Controller:
 
     def _countRegret(self, sortedArray, number):
         regret = 0
-        numberToCheck = 20 - number -1
+        numberToCheck = 20 - number - 1
 
         for index, element in enumerate(sortedArray):
             if index == 0: continue
@@ -89,6 +69,8 @@ class Controller:
         allRandomPoints = random.sample(range(1, 201), 10)
         # [[a],[b],...,[z]] 10 groups of 1 el.
         plotData = list(self._divideChunks(allRandomPoints, 1))
+        plotToVisualize = []
+
         for z in plotData:
             localMatrixData = self._zeroColumn(localMatrixData, z[0])
 
@@ -97,17 +79,20 @@ class Controller:
             minIndex = 0
             for item in itemList:
                 row = localMatrixData[item]
-                minIndex = row.index(self._minValueNotZero(row))
+                minValue = self._minValueNotZero(row)
+                minIndex = row.index(minValue)
             
             plotData[index].append((minIndex))
+            plotToVisualize.append([plotData[index][0], minIndex])
+            # print(plotToVisualize)
             localMatrixData = self._zeroColumn(localMatrixData, minIndex)
 
 
-        # for x in range(0, 20):
         needBreak = False
         steps = 0
+        # for x in range(0, 4):
         while True: 
-            steps +=2
+            steps += 1
             if needBreak: break
 
             for index, itemList in enumerate(plotData):
@@ -122,7 +107,10 @@ class Controller:
 
                 for itemIndex, item in enumerate(itemList):
                     row = localMatrixData[item]
-                    minIndex = row.index(self._minValueNotZero(row))
+
+                    minValue = self._minValueNotZero(row)
+                    minIndex = row.index(minValue)
+
                     minArray.append(minIndex)
 
                     rowCopy = row.copy()
@@ -130,15 +118,19 @@ class Controller:
 
                     regret = self._countRegret(rowCopy, len(itemList))
 
-                    if maxRegret < regret:
+                    if maxRegret > regret:
                         maxRegret = regret
                         maxRegretIndex = itemIndex
 
+
                 distance = localMatrixData[itemList[maxRegretIndex]][minArray[maxRegretIndex]]
+                
                 if distance < steps:
+                    plotToVisualize.append([minArray[maxRegretIndex], itemList[maxRegretIndex]])
                     plotData[index].insert(maxRegretIndex, minArray[maxRegretIndex])
                     localMatrixData = self._zeroColumn(localMatrixData, minArray[maxRegretIndex])
-        return plotData
+                    
+        return plotToVisualize
 
 
     def createGraphsNearestNeighborMethod(self, matrixData):
@@ -146,58 +138,177 @@ class Controller:
         allRandomPoints = random.sample(range(1, 201), 10)
         # [[a],[b],...,[z]] 10 groups of 1 el.
         plotData = list(self._divideChunks(allRandomPoints, 1))
+        plotToVisualize = []
+
         for z in plotData:
             localMatrixData = self._zeroColumn(localMatrixData, z[0])
+
+        for index, itemList in enumerate(plotData):
+            minIndex = 0
+            for item in itemList:
+                row = localMatrixData[item]
+                minValue = self._minValueNotZero(row)
+                minIndex = row.index(minValue)
+            
+            plotData[index].append((minIndex))
+            plotToVisualize.append([plotData[index][0], minIndex])
+            localMatrixData = self._zeroColumn(localMatrixData, minIndex)
+
 
         needBreak = False
         steps = 0
         while True: 
-            steps +=2
+            steps += 1
             if needBreak: break
+
             for index, itemList in enumerate(plotData):
+                maxRegretIndex = 0
+                maxRegret = 0
+                minValue = 1000
+                fromIndex = 0
                 minIndex = 0
 
+                regretArray = []
                 test = np.array(localMatrixData[0])
-                if np.all(test==0): 
+                if np.all(test == 0): 
                     needBreak = True
                     break
 
-                for item in itemList:
+                for itemIndex, item in enumerate(itemList):
                     row = localMatrixData[item]
-                    minIndex = row.index(self._minValueNotZero(row))
+
+                    tempMinValue = self._minValueNotZero(row)
+                    if minValue > tempMinValue:
+                        minValue = tempMinValue
+                        minIndex = row.index(minValue)
+                        fromIndex = item
+
+                distance = localMatrixData[itemList[itemIndex]][minIndex]
                 
-                plotData[index].append((minIndex))
-                localMatrixData = self._zeroColumn(localMatrixData, minIndex)
-                
-        return plotData
+                if distance < steps:
+                    plotToVisualize.append([itemList[itemIndex], minIndex])
+                    plotData[index].insert(fromIndex, minIndex)
+                    localMatrixData = self._zeroColumn(localMatrixData, minIndex)
+                    
+        return plotToVisualize
 
 
     def countDistance(self, plotData, matrixData):
         sumOfDistances = 0
 
         for itemList in plotData:
-            for index, item in enumerate(itemList):
-                if index == 0: continue
-                sumOfDistances += matrixData[itemList[index-1]][item]
+            sumOfDistances += matrixData[itemList[0]][itemList[1]]
         return sumOfDistances
 
 
-    def testMethod(self, matrixData):
+    def testRegretMethod(self, matrixData):
         minDistance = 10000
+        maxDistance = 0
+        avgDistance = 0
+        sumDistance = 0
+
+        minTime = 10000
+        maxTime = 0
+        avgTime = 0
+        sumTime = 0
+
         finalPlotData = []
 
         for x in range(0, 100):
+            start_time = time.time()
             plotData = self.createGraphsRegretMethod(matrixData)
+            elapsed_time = time.time() - start_time
+
+            milli_sec = int(round(elapsed_time * 1000))
             distance = self.countDistance(plotData, matrixData)
+            sumDistance += distance
+            sumTime += milli_sec
+
             if distance < minDistance:
                 minDistance = distance
                 finalPlotData = plotData
 
+            if distance > maxDistance:
+                maxDistance = distance
+
+            if milli_sec < minTime:
+                minTime = milli_sec
+
+            if milli_sec > maxTime:
+                maxTime = milli_sec
+
             print('iteration {} Current distance: {}'.format(x, distance))
             print('iteration {} Minimum distance: {}'.format(x, minDistance))
+            print('iteration {} MIN Time of execution: {}'.format(x, minTime))
+            print('iteration {} MAX Time of execution: {}'.format(x, maxTime))
+            print('iteration {} Time of execution: {}'.format(x, milli_sec))
             print('>>>>>>>---------<<<<<<<<')
 
-        
-        print('Final distance: '.format(minDistance))
+        avgDistance = sumDistance/100
+        avgTime = sumTime/100
+
+        print('Final minDistance: {}'.format(minDistance))
+        print('Final maxDistance: {}'.format(maxDistance))
+        print('Final avgDistance: {}'.format(avgDistance))
+
+        print('Final minTime: {}'.format(minTime))
+        print('Final maxTime: {}'.format(maxTime))
+        print('Final avgTime: {}'.format(avgTime))
+
+        return finalPlotData
+
+    def testMethodNeighbor(self, matrixData):
+        minDistance = 10000
+        maxDistance = 0
+        avgDistance = 0
+        sumDistance = 0
+
+        minTime = 10000
+        maxTime = 0
+        avgTime = 0
+        sumTime = 0
+
+        finalPlotData = []
+
+        for x in range(0, 100):
+            start_time = time.time()
+            plotData = self.createGraphsNearestNeighborMethod(matrixData)
+            elapsed_time = time.time() - start_time
+
+            milli_sec = int(round(elapsed_time * 1000))
+            distance = self.countDistance(plotData, matrixData)
+            sumDistance += distance
+            sumTime += milli_sec
+
+            if distance < minDistance:
+                minDistance = distance
+                finalPlotData = plotData
+
+            if distance > maxDistance:
+                maxDistance = distance
+
+            if milli_sec < minTime:
+                minTime = milli_sec
+
+            if milli_sec > maxTime:
+                maxTime = milli_sec
+
+            print('iteration {} Current distance: {}'.format(x, distance))
+            print('iteration {} Minimum distance: {}'.format(x, minDistance))
+            print('iteration {} MIN Time of execution: {}'.format(x, minTime))
+            print('iteration {} MAX Time of execution: {}'.format(x, maxTime))
+            print('iteration {} Time of execution: {}'.format(x, milli_sec))
+            print('>>>>>>>---------<<<<<<<<')
+
+        avgDistance = sumDistance/100
+        avgTime = sumTime/100
+
+        print('Final minDistance: {}'.format(minDistance))
+        print('Final maxDistance: {}'.format(maxDistance))
+        print('Final avgDistance: {}'.format(avgDistance))
+
+        print('Final minTime: {}'.format(minTime))
+        print('Final maxTime: {}'.format(maxTime))
+        print('Final avgTime: {}'.format(avgTime))
 
         return finalPlotData
