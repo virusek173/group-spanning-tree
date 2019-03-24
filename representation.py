@@ -3,8 +3,8 @@ import random
 from scipy.spatial import distance as countDistance
 
 class Representation:
-    fileCoordsName = 'objects.data'
-    fileMatrixName = 'matrix.data'
+    fileCoordsName = 'objects20_06.data'
+    fileMatrixName = 'matrix20_06.data'
     coordData = ()
     matrixData = ()
 
