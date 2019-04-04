@@ -15,10 +15,9 @@ class Controller:
         for i in range(0, len(arr), chunk):  
             yield arr[i:i + chunk]
 
-    def createGraphsRandomMethod(self):
+    def createGraphsRandomMethod(self, *args):
         allRandomPoints = random.sample(range(0, self.n), self.n)
         plotData = list(self._divideChunks(allRandomPoints, math.ceil(self.n / self.groups)))
-        print('plotData:',  self.groups, len(plotData))
         return plotData
 
     def _minValueNotZero(self, myList):
@@ -194,7 +193,7 @@ class Controller:
                     plotData[index].insert(fromIndex, minIndex)
                     localMatrixData = self._zeroColumn(localMatrixData, minIndex)
                     
-        return plotToVisualize
+        return plotData
 
 
     def countDistance(self, plotData, matrixData):

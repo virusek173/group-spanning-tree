@@ -8,6 +8,9 @@ from bokeh.plotting import figure
 from bokeh.models import GraphRenderer, StaticLayoutProvider, Oval
 from bokeh.palettes import Spectral8
 
+pallete = [
+    '#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231', '#911eb4', '#46f0f0', '#f032e6', '#bcf60c', '#fabebe', '#008080', '#e6beff', '#9a6324', '#fffac8', '#800000', '#aaffc3', '#808000', '#ffd8b1', '#000075', '#808080', '#ffffff', '#000000'
+]
 class Visualization:
     coordData=()
     plotData=[]
@@ -52,7 +55,7 @@ class Visualization:
         print('showing visualization...')
         plt.show()
 
-    def showScatterplotFromDict(self):
+    def showScatterplotFromDict(self, savename='output/random_REAL_100_test_MST.png'):
         coordData = self.coordData
         data = [[12,16], [12,18], [30,18], [10,20]]
         # rootPoints = [item[0] for item in self.plotData]
@@ -63,23 +66,24 @@ class Visualization:
         pointSize = np.pi*6
 
         # Visualize points
-        scatterX = [x[0] for x in coordData]
-        scatterY = [y[1] for y in coordData]
+     
 
-        plt.scatter(scatterX, scatterY, s=pointSize, c=colors, alpha=0.5)
         # print(self.plotData)
         # Visualize graphs
-        for line in self.plotData:
-            plotX = [coordData[index][0] for index in line]
-            plotY = [coordData[index][1] for index in line]
-            plt.plot(plotX, plotY, color='blue')
+        for idx, group in enumerate(self.plotData):
+            for line in group:
+                plotX = [coordData[index][0] for index in line]
+                plotY = [coordData[index][1] for index in line]
+                plt.plot(plotX, plotY, color=pallete[idx])
 
+          
+        scatterX = [x[0] for x in coordData]
+        scatterY = [y[1] for y in coordData]
+        plt.scatter(scatterX, scatterY, s=pointSize, c=pallete[idx], alpha=0.5)
         colors = (1,0,0)
         pointSize = np.pi*4
 
-        plt.title('Spanning tree groups')
+        plt.title('Groups')
         plt.xlabel('x')
         plt.ylabel('y')
-        plt.savefig('output/random_REAL_100_test_MST.png')
-        print('showing visualization...')
-        plt.show()
+        plt.savefig(savename)
