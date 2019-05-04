@@ -3,10 +3,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import math
-from bokeh.io import show, output_file
-from bokeh.plotting import figure
-from bokeh.models import GraphRenderer, StaticLayoutProvider, Oval
-from bokeh.palettes import Spectral8
 
 pallete = [
     '#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231', '#911eb4', '#46f0f0', '#f032e6', '#bcf60c', '#fabebe', '#008080', '#e6beff', '#9a6324', '#fffac8', '#800000', '#aaffc3', '#808000', '#ffd8b1', '#000075', '#808080', '#ffffff', '#000000'

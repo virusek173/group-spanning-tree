@@ -6,7 +6,7 @@ from visualization import Visualization
 from controller import Controller
 from local_search import local_search, cost_function, MOVE_CHOICE_TACTIC, GREEDY, STEEPEST
 
-def singleLaunch(rep, initial_solution_fn, tactic, name, n):
+def multiLaunch(rep, initial_solution_fn, tactic, name, n, cache = None, candidate=False):
     matrixData = rep.getMatrixData()
 
 
@@ -24,7 +24,7 @@ def singleLaunch(rep, initial_solution_fn, tactic, name, n):
         plotData = initial_solution_fn(matrixData)
         initial_cost = cost_function(np.asarray(matrixData), plotData)
         start = datetime.datetime.now()
-        final_solution = local_search(plotData, matrixData, None, tactic)
+        final_solution = local_search(plotData, matrixData, None, tactic, cache, candidate)
         final_time = (datetime.datetime.now() - start).total_seconds() * 1000
         final_cost = cost_function(np.asarray(matrixData), final_solution)
         final_cost = final_cost[0] / final_cost[1]
@@ -65,11 +65,50 @@ def singleLaunch(rep, initial_solution_fn, tactic, name, n):
     visual = Visualization(coordData, lines)
     visual.showScatterplotFromDict(name)
 
+def singleLaunch(rep, initial_solution_fn, tactic, name, cache = False, candidate = False):
+    matrixData = rep.getMatrixData()
+    plotData = initial_solution_fn(matrixData)
+    start = datetime.datetime.now()
+
+    final_solution = local_search(plotData, matrixData, None, tactic, cache, candidate)
+    final_time = (datetime.datetime.now() - start).total_seconds() * 1000
+    final_cost = cost_function(np.asarray(matrixData), final_solution)
+    final_cost = final_cost[0] / final_cost[1]
+
+    print('Final solution cost:', final_cost, 'Time: ', final_time)
+
+    lines = []
+    for group in final_solution:
+        g = nx.Graph()
+        g.add_nodes_from(group)
+        weights = np.asarray(matrixData)[group,:][:,group]
+        for i in range(len(group)):
+            for j in range(i + 1, len(group)):
+                g.add_edge(group[i], group[j], weight=weights[i,j])
+
+        lines = lines + [[[a, b] for a,b,c in nx.minimum_spanning_edges(g)]]
+
+    coordData = rep.getCoordData()
+    visual = Visualization(coordData, lines)
+    visual.showScatterplotFromDict(name)
+
 rep = Representation()
 matrixData = rep.getMatrixData()
 controller = Controller(20, len(matrixData))
 
-# singleLaunch(rep, controller.createGraphsNearestNeighborMethod, MOVE_CHOICE_TACTIC[GREEDY], 'output/nn_greedy', 50)
-# singleLaunch(rep, controller.createGraphsRandomMethod, MOVE_CHOICE_TACTIC[GREEDY], 'output/random_greedy', 10)
-singleLaunch(rep, controller.createGraphsNearestNeighborMethod, MOVE_CHOICE_TACTIC[STEEPEST], 'output/nn_steepest', 20)
-#singleLaunch(rep, controller.createGraphsRandomMethod, MOVE_CHOICE_TACTIC[STEEPEST], 'output/random_steepest', 25)
+# multiLaunch(rep, controller.createGraphsNearestNeighborMethod, MOVE_CHOICE_TACTIC[GREEDY], 'output/nn_greedy', 5)
+# multiLaunch(rep, controller.createGraphsRandomMethod, MOVE_CHOICE_TACTIC[GREEDY], 'output/random_greedy', 10)
+# multiLaunch(rep, controller.createGraphsNearestNeighborMethod, MOVE_CHOICE_TACTIC[STEEPEST], 'output/nn_steepest', 5)
+#multiLaunch(rep, controller.createGraphsRandomMethod, MOVE_CHOICE_TACTIC[STEEPEST], 'output/random_steepest', 25)
+
+# multiLaunch(rep, controller.createGraphsNearestNeighborMethod, MOVE_CHOICE_TACTIC[STEEPEST], 'output/nn_WithoutModifications', 10)
+# singleLaunch(rep, controller.createGraphsNearestNeighborMethod, MOVE_CHOICE_TACTIC[STEEPEST], None, 'output/WithoutModifications')
+
+# multiLaunch(rep, controller.createGraphsNearestNeighborMethod, MOVE_CHOICE_TACTIC[STEEPEST], 'output/nn_WithCache', 10, True)
+# singleLaunch(rep, controller.createGraphsNearestNeighborMethod, MOVE_CHOICE_TACTIC[STEEPEST], 'output/WithCache', True)
+
+multiLaunch(rep, controller.createGraphsNearestNeighborMethod, MOVE_CHOICE_TACTIC[STEEPEST], 'output/nn_WithCandidate', 5, False, True)
+# singleLaunch(rep, controller.createGraphsNearestNeighborMethod, MOVE_CHOICE_TACTIC[STEEPEST], 'output/WithCandidate', False, True)
+
+# multiLaunch(rep, controller.createGraphsNearestNeighborMethod, MOVE_CHOICE_TACTIC[STEEPEST], 'output/nn_WithCacheAndCandidate', 10,  True, True)
+# singleLaunch(rep, controller.createGraphsNearestNeighborMethod, MOVE_CHOICE_TACTIC[STEEPEST], 'output/WithCacheAndCandidate', True, True)
