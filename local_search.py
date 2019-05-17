@@ -2,6 +2,12 @@ import random
 import numpy as np
 from copy import deepcopy
 import math 
+import datetime
+from functools import partial
+
+def element_addition_cost(initial_cost, distance_matrix, solution, element, group):
+    distance_gain = np.sum(distance_matrix[solution[group], element])
+    return (initial_cost[0] + distance_gain), (initial_cost[1] + len(solution[group]))
 
 def cost_function(distance_matrix, groups):
     return (
@@ -63,7 +69,7 @@ MOVE_CHOICE_TACTIC = {
     STEEPEST: STEEPEST,
 }
 
-def local_search_move(initial_solution, distance_matrix, initial_cost, tactic=MOVE_CHOICE_TACTIC[GREEDY], cacheDict = None, candidateArray = []):
+def local_search_move(initial_solution, distance_matrix, initial_cost, tactic=MOVE_CHOICE_TACTIC[GREEDY],  cacheDict = None, candidateArray = []):
     moves = []
 
     best_move = None
@@ -104,6 +110,10 @@ def local_search_move(initial_solution, distance_matrix, initial_cost, tactic=MO
         return None, None, localCacheDict
 
     return best_move, best_cost, localCacheDict
+
+def ILS_move(initial_solution, distance_matrix, initial_cost, tactic=MOVE_CHOICE_TACTIC[GREEDY], candidateArray = []):
+    pass
+
     
 def local_search(initial_solution, distance_matrix, max_iterations = None, tactic=MOVE_CHOICE_TACTIC[GREEDY], cache = False, candidate = False):
     distance_matrix = np.asarray(distance_matrix)
@@ -182,8 +192,78 @@ def local_search(initial_solution, distance_matrix, max_iterations = None, tacti
         else:
             step, new_cost, newCacheDict = local_search_move(solution, distance_matrix, cost, tactic, None, candidateArray)
 
-    return solution
+    return solution, cost
 
+def MSLS(data, random_graph_generator, n=100):
+    best_cost = None
+    best_solution = None
+    for i in range(n):
+        random_solution = random_graph_generator()
+        solution, cost = local_search(random_solution, data, None, tactic=MOVE_CHOICE_TACTIC[GREEDY], cache=True, candidate=False)
+
+        if best_cost is None or cost[0]/cost[1] < best_cost:
+            best_cost = cost[0]/cost[1]
+            best_solution = solution
+
+    return best_solution, best_cost
+
+def ILS(data, random_graph_generator, perturbation, max_time):
+    best_cost = None
+    best_solution = None
+    start = datetime.datetime.now()
+    random_solution = random_graph_generator()
+    solution = random_solution
+
+    while (datetime.datetime.now() - start).total_seconds() * 1000 < max_time:
+        solution, cost = local_search(solution, data, None, tactic=MOVE_CHOICE_TACTIC[GREEDY], cache=True, candidate=False)
+
+        if best_cost is None or cost[0]/cost[1] < best_cost:
+            best_cost = cost[0]/cost[1]
+            best_solution = solution
+
+        solution = perturbation(solution)
+
+    return best_solution, best_cost
+
+def low_perturbation(solution, n, objects, **kargs):
+    objects = np.arange(objects)
+    np.random.shuffle(objects)
+    to_remove = objects[:n]
+    number_of_groups = len(solution)
+    new_solution = [
+        [ obj for obj in group if obj not in to_remove ]
+        for group in solution
+    ]
+    new_groups = np.random.randint(0, number_of_groups, len(to_remove))
+    for obj_idx, g in enumerate(new_groups):
+        new_solution[g].append(to_remove[obj_idx])
+    
+    return new_solution
+
+def high_perturbation(solution, n, objects, rebuild, **kargs):
+    objects = np.arange(objects)
+    np.random.shuffle(objects)
+    to_remove = objects[:n]
+    new_solution = [
+        [ obj for obj in group if obj not in to_remove ]
+        for group in solution
+    ]
+    return rebuild(new_solution, to_remove)
+
+def NNrebuild(partial_solution, removed, data, **kwargs):
+    inital_cost = cost_function(data, partial_solution)
+    cost = inital_cost
+    for obj in removed:
+        add_to_group_cost = partial(element_addition_cost, cost, data, partial_solution, obj)
+        selected_group, cost = min(
+            [
+                (group, add_to_group_cost(group))
+                for group in range(len(partial_solution))
+            ],
+            key = lambda c: c[1][0] / c[1][1]
+        )
+        partial_solution[selected_group].append(obj)
+    return partial_solution
 
 def chunk(arr, chunk_size):
     for i in range(0, len(arr), chunk_size):  
