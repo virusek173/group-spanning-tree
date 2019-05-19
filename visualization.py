@@ -15,6 +15,18 @@ class Visualization:
         self.coordData = coordData
         self.plotData = plotData
 
+    def showSimilarityPlot(self, similarityArray, savename):
+        simiarityData = [item.similarity for item in  similarityArray]
+        costData = [item.cost for item in  similarityArray]
+
+        plt.clf()
+        plt.title('Similarity and result plot')
+        plt.plot(costData, simiarityData)
+        plt.xlabel('Result')
+        plt.ylabel('Similarity')
+        plt.savefig(savename)
+
+
     def showScatterplot(self):
         coordData = self.coordData
         rootPoints = [item[0] for item in self.plotData]

@@ -6,6 +6,8 @@ from visualization import Visualization
 from controller import Controller
 from local_search import local_search, cost_function, MOVE_CHOICE_TACTIC, GREEDY, STEEPEST, MSLS, ILS, low_perturbation, high_perturbation, NNrebuild
 from functools import partial
+from collections import namedtuple
+from scipy.stats import pearsonr
 
 def solution_to_lines(data, solution):
     lines = []
@@ -209,5 +211,93 @@ def run_ILS_high(n = 1, max_time = 1000, save_file='resultILS_high'):
     visual.showScatterplotFromDict(save_file)
 
 # run_MSLS(n=10, save_file='result')
-run_ILS_low(n=10, max_time=707936)
-run_ILS_high(n=10, max_time=707936)
+# run_ILS_low(n=10, max_time=707936)
+# run_ILS_high(n=10, max_time=707936)
+
+def multi_launch_with_corelation_plots(tactic, name, n, cache = None, candidate=False):
+    rep = Representation()
+    matrixData = rep.getMatrixData()
+    controller = Controller(20, len(matrixData))
+
+    Result = namedtuple('Result', 'cost, similarity')
+    result_array_best = []
+    result_array_average = []
+    solutions = []
+    costs = []
+
+    n_sum = 0
+    n_max = float("-inf")
+    n_min = float("inf")
+    t_sum = 0
+    t_max = float("-inf")
+    t_min = float("inf")
+    max_solution = None
+    min_solution = None
+
+    for i in range(n):
+        print(name, ' Solution ', i+1)
+        print('Generate data... ')
+        plotData = controller.createGraphsRandomMethod(matrixData)
+        initial_cost = cost_function(np.asarray(matrixData), plotData)
+        # print('plotData: {}'.format(plotData))
+        start = datetime.datetime.now()
+        final_solution = local_search(plotData, matrixData, None, tactic, cache, candidate)
+        final_time = (datetime.datetime.now() - start).total_seconds() * 1000
+        # print('final_solution: {}'.format(final_solution[0]))
+        final_cost = cost_function(np.asarray(matrixData), final_solution[0])
+        final_cost = final_cost[0] / final_cost[1]
+
+        # result_array.append(Result(final_solution[0], final_cost))
+        solutions.append(final_solution[0])
+        costs.append(final_cost)
+
+        n_sum += final_cost
+        if final_cost < n_min:
+            n_min = final_cost
+            min_solution = final_solution[0]
+
+        if final_cost > n_max:
+            n_max = final_cost
+            max_solution = final_solution[0]
+
+        t_sum += final_time
+        if final_time < t_min:
+            t_min = final_time
+        if final_time > t_max:
+            t_max = final_time
+               
+        print('Final solution cost:', final_cost, 'Time: ', final_time)
+
+    print('Cost min: {}, max: {}, avg: {}'.format(n_min, n_max, n_sum / n))
+    print('Time min: {}, max: {}, avg: {}'.format(t_min, t_max, t_sum / n))
+
+    for index, solution in enumerate(solutions):
+        if n_min == costs[index]: continue
+        similarity = controller.count_similarity(solution, min_solution)
+        result_array_best.append(Result(costs[index], similarity))
+
+    for index, origin_solution in enumerate(solutions):
+        similarity = 0
+        if n_min == costs[index]: continue
+        for check_solution in solutions:
+            similarity += controller.count_similarity(origin_solution, check_solution)
+        similarity_average = similarity/n
+        
+        result_array_average.append(Result(costs[index], similarity_average))
+
+    result_array_best.sort()
+    result_array_average.sort()
+
+    np_result_array_best = np.array(result_array_best)
+    np_result_array_average = np.array(result_array_average)
+
+    pearson_coleartion = pearsonr(np_result_array_best[:,1], np_result_array_average[:,1])
+    print('pearson_coleartion: {}'.format(pearson_coleartion))
+
+    coordData = rep.getCoordData()
+    visual = Visualization(coordData, solution_to_lines(matrixData, min_solution))
+    visual.showScatterplotFromDict(name)
+    visual.showSimilarityPlot(result_array_best, 'output_plot/{}_similarity_best_plot'.format(n) )
+    visual.showSimilarityPlot(result_array_average, 'output_plot/{}_similarity_average_plot'.format(n) )
+
+multi_launch_with_corelation_plots(MOVE_CHOICE_TACTIC[GREEDY], 'output/random_greedy_coleration', 5)

@@ -315,3 +315,19 @@ class Controller:
         print('Final avgTime: {}'.format(avgTime))
 
         return finalPlotData
+
+    def newton(self, n, k):
+        if k == 0 or k == n:
+            return 1
+        else:
+            return float(n) / k * self.newton(n - 1, k - 1)
+
+    def count_similarity(self, solution, min_solution):
+        similarity = 0
+        for group in solution:
+            for min_group in min_solution:
+                itersec = set(group).intersection(min_group)
+                count_intersection = len(itersec)
+                similarity += self.newton(count_intersection, 2)
+
+        return similarity
